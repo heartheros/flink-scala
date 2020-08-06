@@ -64,7 +64,8 @@ object FlinkWaterMark {
     }
 
     waterMarkStream.keyBy(0).window(TumblingEventTimeWindows.of(Time.seconds(10)))
-      .apply(new MyWindowFunction).print()
+      .apply(new MyWindowFunction)
+      .print()
 
     env.execute()
   }
