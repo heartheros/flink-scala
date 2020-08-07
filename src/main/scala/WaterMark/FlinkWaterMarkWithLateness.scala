@@ -6,7 +6,7 @@ import org.apache.flink.api.java.tuple.Tuple
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks
 import org.apache.flink.streaming.api.scala.function.WindowFunction
-import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
+import org.apache.flink.streaming.api.scala.{DataStream, OutputTag, StreamExecutionEnvironment}
 import org.apache.flink.streaming.api.watermark.Watermark
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
 import org.apache.flink.streaming.api.windowing.time.Time
@@ -30,15 +30,15 @@ object FlinkWaterMarkWithLateness {
     import org.apache.flink.api.scala._
     val lineStream: DataStream[(String, Long)] = env.socketTextStream("localhost", 9000)
       .map(x => {
-        var items: Array[String] = x.split(" ")
-        (items(0), items(1).toLong)
+        var items: Array[String] = x.split("\\|")
+        (items(0), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse(items(1)).getTime)
       })
 
     val waterMarkStream: DataStream[(String, Long)] = lineStream.assignTimestampsAndWatermarks(
       new AssignerWithPeriodicWatermarks[(String, Long)] {
         var max: Long = 0L;
         var diff: Long = 10000L;
-        var sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        var sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
         override def getCurrentWatermark: Watermark = {
           val watermark: Watermark = new Watermark(max - diff)
           watermark
@@ -58,11 +58,20 @@ object FlinkWaterMarkWithLateness {
       }
     )
 
-    waterMarkStream.keyBy(0)
-      .window(TumblingEventTimeWindows.of(Time.seconds(10)))
-      .allowedLateness(Time.seconds(10))
-      .apply(new MyWindowFunctionForLateness)
-      .print()
+//    waterMarkStream.keyBy(0)
+//      .window(TumblingEventTimeWindows.of(Time.seconds(10)))
+//      .allowedLateness(Time.seconds(60))
+//      .apply(new MyWindowFunctionForLateness)
+//      .print()
+
+    val outputTag: OutputTag[(String, Long)] = new OutputTag[(String, Long)]("late_data")
+    val outputWindow: DataStream[String] = waterMarkStream.keyBy(0)
+        .window(TumblingEventTimeWindows.of(Time.seconds(3)))
+        .sideOutputLateData(outputTag)
+        .apply(new MyWindowFunctionForLateness)
+    val sideOutput: DataStream[(String, Long)] = outputWindow.getSideOutput(outputTag)
+    sideOutput.print()
+    outputWindow.print()
 
     env.execute("with lateness")
   }
