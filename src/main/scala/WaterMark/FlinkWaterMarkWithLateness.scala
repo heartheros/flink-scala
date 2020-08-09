@@ -60,7 +60,7 @@ object FlinkWaterMarkWithLateness {
 
 //    waterMarkStream.keyBy(0)
 //      .window(TumblingEventTimeWindows.of(Time.seconds(10)))
-//      .allowedLateness(Time.seconds(60))
+//      .allowedLateness(Time.seconds(2))
 //      .apply(new MyWindowFunctionForLateness)
 //      .print()
 
