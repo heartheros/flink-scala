@@ -1,7 +1,7 @@
 package FlinkSql
 
-import org.apache.flink.api.common.state.StateTtlConfig.TimeCharacteristic
 import org.apache.flink.core.fs.FileSystem.WriteMode
+import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.table.api.{Table, Types}
 import org.apache.flink.table.api.scala.StreamTableEnvironment
@@ -14,7 +14,7 @@ import org.apache.flink.table.sources.CsvTableSource
 object FlinkStreamSql {
   def main(args: Array[String]): Unit = {
     val streamEnvironment: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
-    streamEnvironment.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime)
+//    streamEnvironment.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime)
 
     val streamTableEnv: StreamTableEnvironment = StreamTableEnvironment.create(streamEnvironment)
 
@@ -31,7 +31,7 @@ object FlinkStreamSql {
     streamTableEnv.registerTableSource("user", tableSource)
 
 //    val result: Table = streamTableEnv.scan("user").filter("age > 18")
-  val result: Table = streamTableEnv.sqlQuery("select * from `user` where age > 18 partition by `id` order by `id`")
+  val result: Table = streamTableEnv.sqlQuery("select `id`,`name`,`age` from `user` where id =1")
 
     val sink = new CsvTableSink(
       "/Users/leixinxin/Downloads/flinksql-out.csv",
