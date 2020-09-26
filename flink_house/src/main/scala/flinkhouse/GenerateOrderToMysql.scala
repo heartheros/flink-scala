@@ -9,6 +9,7 @@ import org.apache.flink.api.java.io.jdbc.{JDBCAppendTableSink, JDBCAppendTableSi
 import org.apache.flink.streaming.api.datastream.{DataStream, DataStreamSource}
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, SourceFunction}
+import org.apache.flink.streaming.util.serialization.{KeyedDeserializationSchema, KeyedSerializationSchema}
 import org.apache.flink.types.Row
 
 import scala.util.Random
@@ -100,6 +101,10 @@ object GenerateOrderToMysql {
     }
     val df = new DecimalFormat(pattern)
     df.format(d)
+  }
+
+  class aaa extends KeyedSerializationSchema[Order] {
+
   }
 
   case class Order(
