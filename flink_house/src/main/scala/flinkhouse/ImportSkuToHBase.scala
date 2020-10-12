@@ -20,17 +20,17 @@ object ImportSkuToHBase {
     import org.apache.flink.api.scala._
 
     val jdbcInputFormat = JDBCInputFormat.buildJDBCInputFormat()
-        .setDBUrl("jdbc:mysql://172.16.183.100:3306/product")
-        .setDrivername("com.mysql.driver.jdbc")
-        .setPassword("123456")
-        .setUsername("root")
-        .setQuery("select * from sku")
-        .setRowTypeInfo(new RowTypeInfo(
-          BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,
-          BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,
-          BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,
-          BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,
-        ))
+      .setDBUrl("jdbc:mysql://172.16.183.100:3306/product?characterEncoding=utf-8")
+      .setDrivername("com.mysql.jdbc.Driver")
+      .setPassword("123456")
+      .setUsername("root")
+      .setQuery("select * from sku")
+      .setRowTypeInfo(new RowTypeInfo(
+        BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,
+        BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,
+        BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO,
+        BasicTypeInfo.STRING_TYPE_INFO,BasicTypeInfo.STRING_TYPE_INFO
+      ))
       .setFetchSize(2)
         .finish()
 
@@ -55,6 +55,7 @@ object ImportSkuToHBase {
     hbaseConf.set(HConstants.ZOOKEEPER_QUORUM, "node01,node02,node03")
     hbaseConf.set(HConstants.CLIENT_PORT_STR, "2181")
     hbaseConf.set("mapred.output.dir", "/tmp2")
+    hbaseConf.set(TableOutputFormat.OUTPUT_TABLE, "flink:data_goods")
 
     val job = Job.getInstance(hbaseConf)
 

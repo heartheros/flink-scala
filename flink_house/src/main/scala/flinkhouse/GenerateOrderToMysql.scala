@@ -103,10 +103,6 @@ object GenerateOrderToMysql {
     df.format(d)
   }
 
-  class aaa extends KeyedSerializationSchema[Order] {
-
-  }
-
   case class Order(
                     order_no: String,
                     user_id: String,
