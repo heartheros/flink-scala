@@ -6,10 +6,12 @@ import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunc
 import org.apache.hadoop.conf
 import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.hadoop.hbase.client.{Connection, ConnectionFactory, Delete, Put, Table}
+import redis.clients.jedis.Jedis
 
 class HBaseSinkFunction extends RichSinkFunction[OrderObj] {
   var connection: Connection = _
   var hTable: Table = _
+  var redisCon: Jedis = _
 
   override def open(parameters: Configuration): Unit = {
     val configuration: conf.Configuration = HBaseConfiguration.create()
@@ -17,6 +19,8 @@ class HBaseSinkFunction extends RichSinkFunction[OrderObj] {
     configuration.set("hbase.zookeeper.property.clientPort", "2181")
     connection = ConnectionFactory.createConnection(configuration)
     hTable = connection.getTable(TableName.valueOf("flink:data_orders"))
+
+    redisCon = new Jedis("localhost", 6379)
   }
 
   override def close(): Unit = {
@@ -25,6 +29,10 @@ class HBaseSinkFunction extends RichSinkFunction[OrderObj] {
     }
     if (null != connection) {
       connection.close()
+    }
+
+    if (null != redisCon) {
+      redisCon.close()
     }
   }
 
@@ -64,6 +72,18 @@ class HBaseSinkFunction extends RichSinkFunction[OrderObj] {
     hTable.delete(delete)
   }
 
+  def redisKeyExpire(dimensionObj: OrderObj): Unit = {
+    val orderInfo: JSONObject =  JSON.parseObject(dimensionObj.data)
+    val dimensionTableId = orderInfo.get("id").toString
+    val dimensionTableName = dimensionObj.table
+    val dimensionTableDbName = dimensionObj.database
+    redisCon.expire(dimensionTableDbName + ":" + dimensionTableName + ":" + dimensionTableId, 1)
+  }
+
+  def redisKeyGet(id: String, tableName: String, dbName: String): String = {
+    redisCon.get(dbName + ":" + tableName + ":" + id)
+  }
+
   override def invoke(value: OrderObj, context: SinkFunction.Context[_]): Unit = {
     val database: String = value.database
     val table: String = value.table
@@ -77,6 +97,9 @@ class HBaseSinkFunction extends RichSinkFunction[OrderObj] {
       } else if (typeResult.equalsIgnoreCase("delete")) {
         deleteHbase(hTable, value)
       }
+    } else if (table.equalsIgnoreCase("abc")
+      || table.equalsIgnoreCase("cba")) {
+      redisCon.ttl()
     }
   }
 }
