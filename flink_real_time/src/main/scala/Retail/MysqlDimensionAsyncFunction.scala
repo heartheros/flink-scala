@@ -7,10 +7,13 @@ import java.util.Properties
 import com.alibaba.fastjson.{JSON, JSONObject}
 import io.vertx.core.Promise.promise
 import io.vertx.core.json.JsonObject
-import io.vertx.core.{Vertx, VertxOptions}
-import io.vertx.ext.jdbc.JDBCClient
+import io.vertx.lang.scala.VertxExecutionContext
+import io.vertx.scala.core.{Vertx, VertxOptions}
+import io.vertx.scala.ext.sql.SQLClient
+
+import scala.util.{Failure, Success}
+//import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.scala.ext.jdbc.JDBCClient
-import io.vertx.ext.sql.{SQLClient, SQLConnection}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.scala.async.{ResultFuture, RichAsyncFunction}
 import redis.clients.jedis.Jedis
@@ -23,6 +26,7 @@ class MysqlDimensionAsyncFunction extends RichAsyncFunction[BinLogObject, BinLog
   var dbProps: Properties = _
   var jedisCon: Jedis = _
   var sqlClient: SQLClient = _
+  var vertx: Vertx = _
 
   var dimensionTables: Set[String] = _
   var cacheTables: Set[String] = _
@@ -70,14 +74,14 @@ class MysqlDimensionAsyncFunction extends RichAsyncFunction[BinLogObject, BinLog
 
     if (realTimeTables.contains(table)) {
 
-      var selectSqlList: ListBuffer[String] = ListBuffer();
-      selectSqlList += getSql(
+      var dimensionSqlListBuffer: ListBuffer[String] = ListBuffer();
+      dimensionSqlListBuffer += getSql(
         table,
         line.get("aaa").toString.toInt,
         "a,b".split(","),
         "aaa-name"
       )
-      selectSqlList += getSql(
+      dimensionSqlListBuffer += getSql(
         table,
         line.get("bbb").toString.toInt,
         "c,d".split(","),
@@ -85,23 +89,21 @@ class MysqlDimensionAsyncFunction extends RichAsyncFunction[BinLogObject, BinLog
       )
 
       genMysqlConn(input.database)
-      sqlClient.getConnection { ar =>
-        if (ar.failed()) {
-          promise.failure(ar.cause())
-        }
-        else {
-          val connection = ar.result()
-          connection.execute(SQL_CREATE_PAGES_TABLE, { create ⇒
-            connection.close()
-            if (create.failed()) {
-              logger.error("Database preparation error", create.cause())
-              promise.failure(create.cause())
-            } else {
-              promise.success()
+      sqlClient.getConnectionFuture().onComplete{
+        case Success(result) => {
+          var connection = result
+
+          connection.queryFuture(dimensionSqlListBuffer.mkString(" union all ")).onComplete{
+            case Success(result) => {
+              print(result)
+              // Do something with results
             }
-          })
+            case Failure(cause) => println("Failure")
+          }(VertxExecutionContext(vertx.getOrCreateContext()))
         }
-      }
+        case Failure(cause) =>
+          println(s"$cause")
+      }(VertxExecutionContext(vertx.getOrCreateContext()))
     }
   }
 
@@ -110,11 +112,8 @@ class MysqlDimensionAsyncFunction extends RichAsyncFunction[BinLogObject, BinLog
   }
 
   def genMysqlConn(database: String): Unit = {
-    val vertx: Vertx = Vertx.vertx(
-      new VertxOptions()
-        .setWorkerPoolSize(10)
-        .setEventLoopPoolSize(5)
-    )
+    vertx = Vertx.vertx(VertxOptions().setWorkerPoolSize(10).setEventLoopPoolSize(5))
+
     val config: JsonObject = new JsonObject()
       .put("driver_class", "com.mysql.jdbc.Driver")
       .put("max_pool_size", 20)
