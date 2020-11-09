@@ -4,13 +4,18 @@ package Retail
 import java.io.FileInputStream
 import java.util.Properties
 
+import com.alibaba.fastjson.{JSON, JSONObject}
+import io.vertx.core.Promise.promise
 import io.vertx.core.json.JsonObject
 import io.vertx.core.{Vertx, VertxOptions}
 import io.vertx.ext.jdbc.JDBCClient
-import io.vertx.ext.sql.SQLClient
+import io.vertx.scala.ext.jdbc.JDBCClient
+import io.vertx.ext.sql.{SQLClient, SQLConnection}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.scala.async.{ResultFuture, RichAsyncFunction}
 import redis.clients.jedis.Jedis
+
+import scala.collection.mutable.ListBuffer
 
 
 class MysqlDimensionAsyncFunction extends RichAsyncFunction[BinLogObject, BinLogObject] {
@@ -24,32 +29,19 @@ class MysqlDimensionAsyncFunction extends RichAsyncFunction[BinLogObject, BinLog
   var realTimeTables: Set[String] = _
 
   override def open(parameters: Configuration): Unit = {
-    val vertx: Vertx = Vertx.vertx(
-      new VertxOptions()
-        .setWorkerPoolSize(10)
-        .setEventLoopPoolSize(5)
-    )
+
     dbProps = new Properties()
     dbProps.load(
       new FileInputStream(Thread.currentThread()
         .getContextClassLoader
-        .getResource("mysql.properties")
+        .getResource("config.properties")
         .getPath)
     )
     dimensionTables = dbProps.getProperty("tables.dimension").split(",").toSet
     cacheTables = dbProps.getProperty("tables.cache").split(",").toSet
     realTimeTables = dbProps.getProperty("tables.realtime").split(",").toSet
 
-    val config: JsonObject = new JsonObject()
-        .put("url", dbProps.getProperty("mysql.url"))
-        .put("driver_class", "com.mysql.jdbc.Driver")
-        .put("max_pool_size", 20)
-        .put("user", dbProps.getProperty("mysq.user"))
-        .put("password", dbProps.getProperty("mysql.password"))
-
-    sqlClient = JDBCClient.createShared(vertx, config)
-
-    jedisCon = new Jedis("localhost", 6379)
+    jedisCon = new Jedis("redis.host", 6379)
   }
 
   override def close(): Unit = {
@@ -67,13 +59,87 @@ class MysqlDimensionAsyncFunction extends RichAsyncFunction[BinLogObject, BinLog
     val table: String = input.table
     val opType: String = input.`type`
 
-    if (dimensionTables.contains(table)) {
+    val line: JSONObject = JSON.parseObject(input.data)
+
+    if (dimensionTables.contains(table) && !opType.equalsIgnoreCase("insert")) {
+      setRedisExpire(getRedisKey(database, table, line.get("id").toString.toInt))
     }
 
     if (cacheTables.contains(table)) {
     }
 
     if (realTimeTables.contains(table)) {
+
+      var selectSqlList: ListBuffer[String] = ListBuffer();
+      selectSqlList += getSql(
+        table,
+        line.get("aaa").toString.toInt,
+        "a,b".split(","),
+        "aaa-name"
+      )
+      selectSqlList += getSql(
+        table,
+        line.get("bbb").toString.toInt,
+        "c,d".split(","),
+        "bbb-name"
+      )
+
+      genMysqlConn(input.database)
+      sqlClient.getConnection { ar =>
+        if (ar.failed()) {
+          promise.failure(ar.cause())
+        }
+        else {
+          val connection = ar.result()
+          connection.execute(SQL_CREATE_PAGES_TABLE, { create ⇒
+            connection.close()
+            if (create.failed()) {
+              logger.error("Database preparation error", create.cause())
+              promise.failure(create.cause())
+            } else {
+              promise.success()
+            }
+          })
+        }
+      }
     }
+  }
+
+  def getSql(table: String, index: Int, fields: Array[String], indexFieldName: String): String = {
+    "select " + table + "as t," + fields.mkString(",") + " from " + table + " where " + indexFieldName + "=" + index
+  }
+
+  def genMysqlConn(database: String): Unit = {
+    val vertx: Vertx = Vertx.vertx(
+      new VertxOptions()
+        .setWorkerPoolSize(10)
+        .setEventLoopPoolSize(5)
+    )
+    val config: JsonObject = new JsonObject()
+      .put("driver_class", "com.mysql.jdbc.Driver")
+      .put("max_pool_size", 20)
+      .put("user", dbProps.getProperty("mysql.user"))
+      .put("password", dbProps.getProperty("mysql.password"))
+    config.put("url", dbProps.getProperty("mysql.url") + database)
+    sqlClient = JDBCClient.createShared(vertx, config, database)
+  }
+
+  def getRedisCacheWithExpire(redisKey: String): String = {
+    jedisCon.get(redisKey)
+  }
+
+  def setRedisCacheWithExpire(redisKey: String, ttl: Int, value: String): Boolean = {
+    if (null == jedisCon.setex(redisKey, ttl, value)) {
+      return false
+    }
+    true
+  }
+
+  def setRedisExpire(redisKey: String): Unit = {
+    jedisCon.expire(redisKey, -1)
+  }
+
+  def getRedisKey(database: String, table: String, id: Int): String = {
+    database + ":" + table + ":" + id.toString
   }
 }
