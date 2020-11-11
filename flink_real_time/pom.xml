@@ -19,12 +19,12 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-streaming-scala_2.11</artifactId>
+            <artifactId>flink-streaming-scala_2.12</artifactId>
             <version>1.8.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-scala_2.11</artifactId>
+            <artifactId>flink-scala_2.12</artifactId>
             <version>1.8.1</version>
         </dependency>
         <dependency>
@@ -49,7 +49,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-kafka-0.11_2.11</artifactId>
+            <artifactId>flink-connector-kafka-0.11_2.12</artifactId>
             <version>1.8.1</version>
         </dependency>
         <dependency>
@@ -67,11 +67,11 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.7.25</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.bahir</groupId>
-            <artifactId>flink-connector-redis_2.11</artifactId>
-            <version>1.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.bahir</groupId>-->
+<!--            <artifactId>flink-connector-redis_2.12</artifactId>-->
+<!--            <version>1.0</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
@@ -79,12 +79,12 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-statebackend-rocksdb_2.11</artifactId>
+            <artifactId>flink-statebackend-rocksdb_2.12</artifactId>
             <version>1.8.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-hadoop-compatibility_2.11</artifactId>
+            <artifactId>flink-hadoop-compatibility_2.12</artifactId>
             <version>1.8.1</version>
         </dependency>
         <dependency>
@@ -94,7 +94,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-hbase_2.11</artifactId>
+            <artifactId>flink-hbase_2.12</artifactId>
             <version>1.8.1</version>
             <exclusions>
                 <exclusion>
@@ -105,17 +105,18 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-planner_2.11</artifactId>
+            <artifactId>flink-table-planner_2.12</artifactId>
+            <version>1.8.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-api-scala-bridge_2.12</artifactId>
             <version>1.8.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-api-scala-bridge_2.11</artifactId>
-            <version>1.8.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-api-scala_2.11</artifactId>
+            <artifactId>flink-table-api-scala_2.12</artifactId>
             <version>1.8.1</version>
         </dependency>
         <dependency>
@@ -141,13 +142,13 @@
 
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_2.11</artifactId>
+            <artifactId>kafka_2.12</artifactId>
             <version>1.1.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.flink/flink-jdbc -->
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-jdbc_2.11</artifactId>
+            <artifactId>flink-jdbc_2.12</artifactId>
             <version>1.8.1</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
@@ -212,6 +213,12 @@
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
                 <version>3.2.2</version>
+<!--                <version>4.3.0</version>-->
+                <configuration>
+                    <args>
+                        <arg>-target:jvm-1.8</arg>
+                    </args>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
