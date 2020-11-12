@@ -28,11 +28,7 @@ class MysqlDimensionAsyncFunction extends RichAsyncFunction[BinLogObject, BinLog
   var jedisCon: Jedis = _
   var sqlClient: SQLClient = _
   val vertx: Vertx = Vertx.vertx(VertxOptions().setWorkerPoolSize(10).setEventLoopPoolSize(5))
-  val config: JsonObject = new JsonObject()
-    .put("driver_class", "com.mysql.jdbc.Driver")
-    .put("max_pool_size", 20)
-    .put("user", globalConfig.getProperty("mysql.user"))
-    .put("password", globalConfig.getProperty("mysql.password"))
+  var config: JsonObject = _
   var dimensionTables: Set[String] = _
   var cacheTables: Set[String] = _
   var realTimeTables: Set[String] = _
@@ -48,6 +44,11 @@ class MysqlDimensionAsyncFunction extends RichAsyncFunction[BinLogObject, BinLog
         .getResource("config.properties")
         .getPath)
     )
+    config = new JsonObject()
+      .put("driver_class", "com.mysql.jdbc.Driver")
+      .put("max_pool_size", 20)
+      .put("user", globalConfig.getProperty("mysql.user"))
+      .put("password", globalConfig.getProperty("mysql.password"))
 
     dimensionTables = globalConfig.getProperty("tables.dimension").split(",").toSet
     cacheTables = globalConfig.getProperty("tables.cache").split(",").toSet
@@ -96,95 +97,10 @@ class MysqlDimensionAsyncFunction extends RichAsyncFunction[BinLogObject, BinLog
       val dimensionSql: String = getDimensionSql(database, table, line)
       if (null != dimensionSql) {
         genMysqlClient(input.database)
-
-        // 获取 id
-        val infoId: Future[Int] = infoQuery(line.getIntValue("id"))
-
-        // 根据 id 获取品牌
-        val brandString: Future[String] = infoId.compose(infoId => brandQuery(infoId))
-
-        // 根据品牌获取单位
-        val unitId: Future[Int] = brandString.compose(brandString => unitQuery(brandString))
-
-
-//        val testConnectionFuture = sqlClient.getConnectionFuture()
-
-//        testConnectionFuture.onComplete {
-//          case Success(result) => {
-//            var connection = result
-//
-//            connection.queryFuture(dimensionSql).onComplete {
-//              case Success(result) => {
-//                print(result)
-//                // Do something with results
-//              }
-//              case Failure(cause) => println("Failure")
-//            }(VertxExecutionContext(vertx.getOrCreateContext()))
-//          }
-//          case Failure(cause) =>
-//            println(s"$cause")
-//        }(VertxExecutionContext(vertx.getOrCreateContext()))
       }
     }
   }
 
-  def infoQuery(goodsId: Int): Future[Int] = {
-    val promise: Promise[Int] = Promise.promise()
-    sqlClient.getConnection(ar => {
-      if (ar.failed()) {
-        promise.fail(ar.cause())
-        return null
-      }
-      // 获取连接成功
-      var connection = ar.result()
-      connection.querySingle("select info", result => {
-        promise.complete(result.result().get.getInteger(0))
-      })
-    })
-    sqlClient.close()
-    promise.future()
-  }
-
-  def brandQuery(goodsId: Int): Future[String] = {
-    val promise: Promise[String] = Promise.promise()
-    if (goodsId == 1) {
-      sqlClient.getConnection(ar => {
-        if (ar.failed()) {
-          promise.fail(ar.cause())
-          return null
-        }
-        var connection = ar.result()
-        connection.querySingle("select brand", result => {
-          if (result.succeeded()) {
-            promise.complete(result.result().get.getString(0))
-          }
-        })
-      })
-      sqlClient.close()
-    } else {
-      promise.complete("asdadsa")
-    }
-
-    promise.future()
-  }
-
-  def unitQuery(goodsId: String): Future[Int] = {
-    val promise: Promise[Int] = Promise.promise()
-    sqlClient.getConnection(ar => {
-      if (ar.failed()) {
-        promise.fail(ar.cause())
-        return null
-      }
-      var connection = ar.result()
-      connection.querySingle("select unit", result => {
-        if (result.succeeded()) {
-          promise.complete(result.result().get.getInteger(0))
-        }
-      })
-    })
-    sqlClient.close()
-    promise.future()
-  }
 
   def getDimensionSql(database: String, table: String, line: JSONObject): String = {
     val typeName = sqlConfig.getProperty(table)
@@ -193,12 +109,9 @@ class MysqlDimensionAsyncFunction extends RichAsyncFunction[BinLogObject, BinLog
     sqlConfig.getProperty("dimension." + typeName + ".types").split(",").foreach(dimensionTableName => {
       val rawSql = sqlConfig.getProperty("dimension.r." + typeName + ".sql." + dimensionTableName)
 
-//      dimension.a.types=info,category,brand,unit,channel,channel-name,material,mwac,wac
-//      dimension.b.types=info,category,channel,channel-name,material,mwac,wac
 
       val index = line.get("dimension.r." + typeName + ".sql." + dimensionTableName + ".index").toString
       if (null == getRedisCache(getRedisKey(database, dimensionTableName, index))) {
-//        val sql: Unit =
         dimensionSqlListBuffer += printf(rawSql, index).toString
       }
     })
