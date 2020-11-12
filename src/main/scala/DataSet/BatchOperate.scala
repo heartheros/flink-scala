@@ -5,7 +5,7 @@ import org.apache.flink.configuration.Configuration
 object BatchOperate {
   def main(args: Array[String]): Unit = {
 
-    var inputPath = "/Users/leixinxin/Sites/words/"
+    var inputPath = "/Users/luckychacha/Sites/words/"
     val configuration: Configuration = new Configuration()
     configuration.setBoolean("recursive.file.enumeration", true)
 

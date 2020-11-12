@@ -11,7 +11,7 @@ object FlinkCounterAndAccumulator {
 
     import org.apache.flink.api.scala._
 
-    val source: DataSet[String] = env.readTextFile("/Users/leixinxin/Downloads/catalina.out")
+    val source: DataSet[String] = env.readTextFile("/Users/luckychacha/Downloads/catalina.out")
 
     source.map(new RichMapFunction[String, String] {
       val counter = new LongCounter()
@@ -25,7 +25,7 @@ object FlinkCounterAndAccumulator {
         }
         in
       }
-    }).setParallelism(4).writeAsText("/Users/leixinxin/Downloads/catalina-out-count.log")
+    }).setParallelism(4).writeAsText("/Users/luckychacha/Downloads/catalina-out-count.log")
 
     val job = env.execute("accumulator")
 

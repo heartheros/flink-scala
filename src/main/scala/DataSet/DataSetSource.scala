@@ -14,7 +14,7 @@ object DataSetSource {
       .sum(1)
 
     res.setParallelism(1).print()
-    res.writeAsText("/Users/leixinxin/Sites/words/output")
+    res.writeAsText("/Users/luckychacha/Sites/words/output")
     env.execute("data set collection source")
 
   }

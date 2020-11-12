@@ -38,7 +38,7 @@ object FlinkKafkaJsonSource {
     val table: Table = tableEnv.sqlQuery("select userId,`day`,beginTime, endTime from user_log")
 
     val csvSink: CsvTableSink = new CsvTableSink(
-      "/Users/leixinxin/Downloads/20200915-user-log.csv",
+      "/Users/luckychacha/Downloads/20200915-user-log.csv",
       "====",
       1,
       WriteMode.OVERWRITE

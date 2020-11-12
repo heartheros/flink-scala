@@ -9,7 +9,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 /**
- * @author leixinxin
+ * @author luckychacha
  * @date 2020-10-06 10:37
  */
 public class HBaseFilter {

@@ -12,7 +12,7 @@ object FlinkDataSetBroadCast {
     val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
 
     import org.apache.flink.api.scala._
-    val productData: DataSet[String] = env.readTextFile("/Users/leixinxin/Downloads/product.txt")
+    val productData: DataSet[String] = env.readTextFile("/Users/luckychacha/Downloads/product.txt")
 
     val productDataMap = new mutable.HashMap[String, String]
 
@@ -21,7 +21,7 @@ object FlinkDataSetBroadCast {
       productDataMap
     })
 
-    val orderData: DataSet[String] = env.readTextFile("/Users/leixinxin/Downloads/orders.txt")
+    val orderData: DataSet[String] = env.readTextFile("/Users/luckychacha/Downloads/orders.txt")
     val res: DataSet[String] = orderData.map(new RichMapFunction[String, String] {
       var dataList: util.List[Map[String, String]] = null
       var allMap = Map[String, String]()

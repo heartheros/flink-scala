@@ -15,7 +15,7 @@ object DistributedFile {
 
     import org.apache.flink.api.scala._
 
-    env.registerCachedFile("/Users/leixinxin/Downloads/a.log", "testFile")
+    env.registerCachedFile("/Users/luckychacha/Downloads/a.log", "testFile")
     val testElements: DataSet[String] = env.fromElements("aaa", "bbb", "cccc", "hello")
 
     val res = testElements.map(new RichMapFunction[String, String] {

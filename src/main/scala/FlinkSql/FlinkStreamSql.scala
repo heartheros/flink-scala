@@ -26,7 +26,7 @@ object FlinkStreamSql {
       .ignoreParseErrors()
       .lineDelimiter("\r\n")
       .fieldDelimiter(",")
-      .path("/Users/leixinxin/Downloads/flinksql.csv")
+      .path("/Users/luckychacha/Downloads/flinksql.csv")
       .build()
     streamTableEnv.registerTableSource("user", tableSource)
 
@@ -34,7 +34,7 @@ object FlinkStreamSql {
   val result: Table = streamTableEnv.sqlQuery("select `id`,`name`,`age` from `user` where id =1")
 
     val sink = new CsvTableSink(
-      "/Users/leixinxin/Downloads/flinksql-out.csv",
+      "/Users/luckychacha/Downloads/flinksql-out.csv",
       "===",
       1,
       WriteMode.OVERWRITE

@@ -8,7 +8,7 @@ object ImportSkuToMysql {
   def main(args: Array[String]): Unit = {
     val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
     import org.apache.flink.api.scala._
-    val csvFilePath = "/Users/leixinxin/Downloads/Flink实时数仓/数据/实时数仓建表以及数据/kaikeba_goods.csv";
+    val csvFilePath = "/Users/luckychacha/Downloads/Flink实时数仓/数据/实时数仓建表以及数据/kaikeba_goods.csv";
     val fileSource = env.readTextFile(csvFilePath)
     val lines: DataSet[String] = fileSource.flatMap(line => {
       line.split("\r\n")

@@ -6,7 +6,7 @@ import com.google.common.cache.CacheBuilder;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author leixinxin
+ * @author luckychacha
  * @date 2020-10-20 07:44
  */
 public class ReadGuavaCache {

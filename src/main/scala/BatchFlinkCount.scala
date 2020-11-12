@@ -7,8 +7,8 @@ import org.apache.flink.core.fs.FileSystem
  */
 object BatchFlinkCount {
   def main(args: Array[String]): Unit = {
-    val input = "/Users/leixinxin/Sites/input.txt"
-    val output = "/Users/leixinxin/Sites/output.txt"
+    val input = "/Users/luckychacha/Sites/input.txt"
+    val output = "/Users/luckychacha/Sites/output.txt"
 
     val env = ExecutionEnvironment.getExecutionEnvironment
     val text = env.readTextFile(input)
