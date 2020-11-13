@@ -184,7 +184,11 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-jdbc-client-scala_2.12</artifactId>
-<!--            <artifactId>vertx-jdbc-client</artifactId>-->
+            <version>3.8.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-mysql-postgresql-client-scala_2.12</artifactId>
             <version>3.8.5</version>
         </dependency>
 
