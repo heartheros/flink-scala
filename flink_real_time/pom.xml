@@ -198,6 +198,11 @@
             <version>29.0-jre</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.sction</groupId>
+            <artifactId>phprpc</artifactId>
+            <version>3.0.2</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
